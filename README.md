@@ -33,7 +33,7 @@ Name your workflow rule and choose the module as Purchase Order.
 
 Choose workflow type as Event based When a Purchase Order is : Created or Edited and execute the workflow when : When any field is updated.
 
-Filter the triggers - When - Purchase Order Status - is - Approved
+Filter the triggers - When - Purchase Receive Status - is - Issued
 
 Just once or everytime? - Just Once.
 
