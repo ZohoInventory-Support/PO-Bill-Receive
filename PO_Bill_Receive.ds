@@ -1,0 +1,73 @@
+
+purchaseorderID = purchaseorder.get("purchaseorder_id");
+purchaseorderDate = purchaseorder.get("date");
+organizationID = organization.get("organization_id");
+dc = organization.get("data_center_extension");
+bill_number = purchaseorder.get("purchaseorder_number").replaceFirst("PO","B");
+lineItems = purchaseorder.get("line_items");
+json = Map();
+json.put("vendor_id",purchaseorder.get("vendor_id"));
+json.put("date",purchaseorder.get("date"));
+json.put("bill_number",bill_number);
+json.put("due_date",purchaseorder.get("date"));
+newLineItemList = List();
+for each  lineItem in lineItems
+{
+	lineItemMap = Map();
+	lineItemMap.put("purchaseorder_item_id",lineItem.get("line_item_id"));
+	lineItemMap.put("item_order",lineItem.get("item_order"));
+	lineItemMap.put("description",lineItem.get("description"));
+	lineItemMap.put("name",lineItem.get("name"));
+	lineItemMap.put("quantity",lineItem.get("quantity"));
+	lineItemMap.put("rate",lineItem.get("rate"));
+	lineItemMap.put("account_id",lineItem.get("account_id"));
+	lineItemMap.put("tax_id",lineItem.get("tax_id"));
+	lineItemMap.put("item_id",lineItem.get("item_id"));
+	lineItemMap.put("unit",lineItem.get("unit"));
+	lineItemMap.put("warehouse_id",lineItem.get("warehouse_id"));
+	newLineItemList.add(lineItemMap);
+}
+json.put("line_items",newLineItemList);
+params = Map();
+params.put("JSONString",json);
+response = invokeurl
+[
+	url :"https://inventory.zoho" + dc + "/api/v1/bills?organization_id=" + organizationID
+	type :POST
+	parameters:params
+	connection:"zom"
+];
+info response.get("message");
+billdet = response.get("bill");
+liItems = billdet.get("line_items");
+bson = Map();
+for each  i in liItems
+{
+	billitemid = i.get("item_id");
+	billqty = i.get("quantity");
+	newlist = List();
+	for each  items in lineItems
+	{
+		poitem_id = items.get("item_id");
+		if(poitem_id == billitemid)
+		{
+			linemap = Map();
+			linemap.put("line_item_id",items.get("line_item_id"));
+			linemap.put("quantity",billqty);
+			linemap.put("bill_line_item_id",i.get("line_item_id"));
+			newlist.add(linemap);
+		}
+	}
+}
+bson.put("line_items",newlist);
+bson.put("date",purchaseorderDate);
+json = Map();
+json.put("JSONString",bson);
+res = invokeurl
+[
+	url :"https://inventory.zoho" + dc + "/api/v1/purchasereceives?purchaseorder_id=" + purchaseorderID + "&organization_id=" + organizationID
+	type :POST
+	parameters:json
+	connection:"zom"
+];
+info res.get("message");
